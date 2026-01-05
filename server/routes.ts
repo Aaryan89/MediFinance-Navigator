@@ -9,55 +9,71 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  // Mock ML Model Logic
-  const BASE_COSTS: Record<string, number> = {
-    "Cardiac Arrest": 15000,
-    "Appendicitis": 5000,
-    "Hip Fracture": 12000,
-    "Dengue": 2000,
-    "Covid-19": 8000
+  // Microsoft Notebook Logic: Risk Score & Insurance Mapping
+  const riskCoefficients = {
+    sex_male: -0.185917,
+    smoker_yes: 236.511289,
+    region_northwest: -3.706773,
+    region_southeast: -6.578643,
+    region_southwest: -8.097994,
+    age: 2.569757,
+    bmi: 3.370926,
+    children: 4.252788
+  };
+
+  const scoreToCharge = {
+    coefficient: 100.5865091,
+    intercept: -12123.200203717966
+  };
+
+  // MIC Dataset Logic: Base Indian Healthcare Costs
+  const INDIAN_BASE_COSTS: Record<string, number> = {
+    "cardiac_surgery": 850000,
+    "typhoid": 45000,
+    "cataract_surgery": 65000,
+    "dialysis": 25000,
+    "knee_replacement": 350000
   };
 
   const CITY_MULTIPLIER: Record<string, number> = {
-    "Tier 1": 1.5,
-    "Tier 2": 1.2,
-    "Tier 3": 1.0
-  };
-
-  const HOSPITAL_MULTIPLIER: Record<string, number> = {
-    "Corporate": 2.0,
-    "Private": 1.5,
-    "Government": 0.5
-  };
-
-  const ROOM_MULTIPLIER: Record<string, number> = {
-    "Private Suite": 1.8,
-    "Semi-Private": 1.3,
-    "General Ward": 1.0
+    "Chennai": 1.2,
+    "Delhi": 1.5,
+    "Pune": 1.1,
+    "Hyderabad": 1.3,
+    "Jaipur": 1.0
   };
 
   app.post(api.prediction.predict.path, async (req, res) => {
     try {
       const input = api.prediction.predict.input.parse(req.body);
       
-      // Heuristic Calculation
-      let base = BASE_COSTS[input.condition] || 5000;
-      
+      // 1. Calculate Base Healthcare Cost (MIC Dataset Logic)
+      let baseCost = INDIAN_BASE_COSTS[input.condition.toLowerCase().replace(" ", "_")] || 100000;
       const cityMult = CITY_MULTIPLIER[input.city] || 1.0;
-      const hospMult = HOSPITAL_MULTIPLIER[input.hospital_type] || 1.0;
-      const roomMult = ROOM_MULTIPLIER[input.room_type] || 1.0;
       
-      // Age factor: older patients might have complications -> higher cost
-      const ageFactor = input.age > 60 ? 1.3 : (input.age > 40 ? 1.1 : 1.0);
+      // 2. Calculate Insurance Risk/Charge (Microsoft Notebook Logic)
+      let riskScore = 0;
+      riskScore += input.age * riskCoefficients.age;
+      if (input.bmi) riskScore += input.bmi * riskCoefficients.bmi;
+      if (input.children) riskScore += input.children * riskCoefficients.children;
+      if (input.sex === "male") riskScore += riskCoefficients.sex_male;
+      if (input.smoker === "yes") riskScore += riskCoefficients.smoker_yes;
+      if (input.region === "northwest") riskScore += riskCoefficients.region_northwest;
+      if (input.region === "southeast") riskScore += riskCoefficients.region_southeast;
+      if (input.region === "southwest") riskScore += riskCoefficients.region_southwest;
 
-      const avgCost = Math.round(base * cityMult * hospMult * roomMult * ageFactor);
-      const minCost = Math.round(avgCost * 0.85);
-      const maxCost = Math.round(avgCost * 1.25);
+      const predictedInsuranceCharge = Math.max(0, riskScore * scoreToCharge.coefficient + scoreToCharge.intercept);
+
+      // 3. Combined Logic for Indian Context
+      const avgCost = Math.round((baseCost * cityMult + predictedInsuranceCharge) / 2);
+      const minCost = Math.round(avgCost * 0.8);
+      const maxCost = Math.round(avgCost * 1.3);
 
       res.json({
         min_cost: minCost,
         avg_cost: avgCost,
-        max_cost: maxCost
+        max_cost: maxCost,
+        risk_score: Math.round(riskScore)
       });
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -72,25 +88,16 @@ export async function registerRoutes(
     try {
       const input = api.prediction.insurance.input.parse(req.body);
       
-      // Explanation Logic
-      let explanation = `Your insurance covers up to $${input.coverage_amount.toLocaleString()}. `;
+      let explanation = `Your insurance covers up to ₹${input.coverage_amount.toLocaleString()}. `;
       if (input.copay_percent > 0) {
-        explanation += `You have a ${input.copay_percent}% copay, meaning you pay ${input.copay_percent}% of the allowable bill.`;
+        explanation += `You have a ${input.copay_percent}% copay, which is common in Indian policies. You will pay ${input.copay_percent}% of the total bill.`;
       } else {
-        explanation += `You have no copay, which is excellent.`;
+        explanation += `You have no copay, providing full coverage for allowable expenses.`;
       }
 
-      // We don't have the cost in this specific endpoint input as per user spec, 
-      // but the user's "out_of_pocket_estimate" output implies we should estimate it 
-      // based on some hypothetical or maybe the user meant for us to use the previously predicted cost?
-      // The endpoint spec in prompt is: Input { coverage, copay }. Output { explanation, out_of_pocket }.
-      // Without a total bill amount, "out_of_pocket" is impossible to calculate exactly.
-      // I will assume a standard "average claim" for the sake of the endpoint, or return 0 and handle real math in the recommend endpoint.
-      // actually, let's just make it descriptive.
-      
       res.json({
         explanation,
-        out_of_pocket_estimate: 0 // Placeholder, frontend should calculate this using the cost from step 1
+        out_of_pocket_estimate: 0
       });
     } catch (err) {
       res.status(400).json({ message: "Invalid Input" });
@@ -110,24 +117,24 @@ export async function registerRoutes(
       if (coverageGap === 0) {
         recommendation = "You are well covered! Your insurance should handle the estimated costs.";
         actionPlan = [
-          "Confirm network hospital status.",
-          "Keep insurance card ready.",
-          "Ask for pre-authorization."
+          "Confirm network hospital status in your city.",
+          "Keep TPA contact details ready.",
+          "Ask for cashless pre-authorization."
         ];
-      } else if (coverageGap < monthly_income * 0.5) {
-        recommendation = "There is a small gap, but it looks manageable with your monthly income.";
+      } else if (coverageGap < monthly_income * 1.5) {
+        recommendation = "There is a manageable gap based on your monthly income profile.";
         actionPlan = [
-          "Use savings for the copay/gap.",
-          "Ask hospital for a payment plan.",
-          "Check if your employer offers medical advance."
+          "Check for employer-provided top-up insurance.",
+          "Negotiate room rates (General Ward vs Private).",
+          "Inquire about interest-free EMI options."
         ];
       } else {
-        recommendation = "Warning: Significant financial risk detected. The gap exceeds 50% of your monthly income.";
+        recommendation = "High financial stress detected. The cost exceeds 1.5 months of income.";
         actionPlan = [
-          "Urgent: Contact insurance for 'Cashless' verification.",
-          "Explore medical loans or EMI options.",
-          "Consider a different room type to lower costs.",
-          "Ask for a cost estimate in writing from the hospital."
+          "Mandatory: Check 'Cashless' status immediately.",
+          "Apply for medical finance/loans early.",
+          "Consider opting for a government-empanelled hospital.",
+          "Review generic medication options to reduce pharmacy bills."
         ];
       }
 

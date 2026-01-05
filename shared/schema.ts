@@ -11,6 +11,12 @@ export const inquiries = pgTable("inquiries", {
   hospitalType: text("hospital_type").notNull(),
   roomType: text("room_type").notNull(),
   age: integer("age").notNull(),
+  // New ML fields
+  sex: text("sex"),
+  bmi: integer("bmi"),
+  children: integer("children"),
+  smoker: text("smoker"),
+  region: text("region"),
   // Insurance details
   coverageAmount: integer("coverage_amount"),
   copayPercent: integer("copay_percent"),
@@ -35,15 +41,22 @@ export const insertInquirySchema = createInsertSchema(inquiries).omit({
 export const predictCostSchema = z.object({
   condition: z.string(),
   city: z.string(),
-  hospital_type: z.string(), // Keeping snake_case to match user spec for API, or mapping it. Let's use camelCase for TS standard and map in route.
+  hospital_type: z.string(),
   room_type: z.string(),
-  age: z.coerce.number().min(0).max(120)
+  age: z.coerce.number().min(0).max(120),
+  // Fields from Microsoft notebook
+  sex: z.string().optional(),
+  bmi: z.coerce.number().optional(),
+  children: z.coerce.number().optional(),
+  smoker: z.string().optional(),
+  region: z.string().optional()
 });
 
 export const predictCostResponseSchema = z.object({
   min_cost: z.number(),
   avg_cost: z.number(),
-  max_cost: z.number()
+  max_cost: z.number(),
+  risk_score: z.number().optional()
 });
 
 // 2. Check Insurance
@@ -66,7 +79,7 @@ export const recommendFinanceSchema = z.object({
 
 export const recommendFinanceResponseSchema = z.object({
   recommendation: z.string(),
-  action_plan: z.array(z.string()) // Added action plan for better UI
+  action_plan: z.array(z.string())
 });
 
 export type Inquiry = typeof inquiries.$inferSelect;

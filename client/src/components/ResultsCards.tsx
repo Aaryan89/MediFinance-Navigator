@@ -50,10 +50,11 @@ export function CostCard({ min, avg, max }: CostCardProps) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <XAxis dataKey="name" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(val) => `$${val/1000}k`} />
+            <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(val) => `₹${val/1000}k`} />
             <Tooltip 
               cursor={{ fill: 'transparent' }}
               contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+              formatter={(val: number) => [`₹${val.toLocaleString()}`, 'Cost']}
             />
             <Bar dataKey="cost" radius={[6, 6, 0, 0]} barSize={40}>
               {data.map((entry, index) => (
@@ -66,7 +67,7 @@ export function CostCard({ min, avg, max }: CostCardProps) {
 
       <div className="mt-4 pt-4 border-t flex justify-between items-center text-sm">
         <span className="text-slate-500">Average Estimate</span>
-        <span className="font-bold text-2xl text-primary">${avg.toLocaleString()}</span>
+        <span className="font-bold text-2xl text-primary">₹{avg.toLocaleString()}</span>
       </div>
     </motion.div>
   );
@@ -106,12 +107,12 @@ export function InsuranceCard({ coverage, outOfPocket, explanation }: InsuranceC
         <div className="flex justify-between items-end">
           <div>
             <p className="text-sm text-slate-500 mb-1">Your coverage limit</p>
-            <p className="font-semibold text-lg text-slate-700">${coverage.toLocaleString()}</p>
+            <p className="font-semibold text-lg text-slate-700">₹{coverage.toLocaleString()}</p>
           </div>
           <div className="text-right">
             <p className="text-sm text-slate-500 mb-1">Est. Out of Pocket</p>
             <p className={`font-bold text-2xl ${isCovered ? 'text-emerald-600' : 'text-orange-500'}`}>
-              ${outOfPocket > 0 ? outOfPocket.toLocaleString() : 0}
+              ₹{outOfPocket > 0 ? outOfPocket.toLocaleString() : 0}
             </p>
           </div>
         </div>

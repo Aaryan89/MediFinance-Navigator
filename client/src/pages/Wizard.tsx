@@ -153,11 +153,11 @@ export default function Wizard() {
                       className="w-full p-3 rounded-lg border bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
                     >
                       <option value="">Select Condition</option>
-                      <option value="Cardiac Arrest">Cardiac Arrest</option>
-                      <option value="Appendicitis">Appendicitis</option>
-                      <option value="Hip Fracture">Hip Fracture</option>
-                      <option value="Dengue">Dengue</option>
-                      <option value="Covid-19">Covid-19</option>
+                      <option value="cardiac_surgery">Cardiac Surgery</option>
+                      <option value="typhoid">Typhoid</option>
+                      <option value="cataract_surgery">Cataract Surgery</option>
+                      <option value="dialysis">Dialysis</option>
+                      <option value="knee_replacement">Knee Replacement</option>
                     </select>
                     {form1.formState.errors.condition && (
                       <p className="text-xs text-red-500">{form1.formState.errors.condition.message}</p>
@@ -165,19 +165,77 @@ export default function Wizard() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">City Tier</label>
+                    <label className="text-sm font-medium text-slate-700">City</label>
                     <select 
                       {...form1.register("city")}
                       className="w-full p-3 rounded-lg border bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
                     >
-                      <option value="">Select City Type</option>
-                      <option value="Tier 1">Tier 1 (Metropolitan)</option>
-                      <option value="Tier 2">Tier 2 (Urban)</option>
-                      <option value="Tier 3">Tier 3 (Semi-Urban)</option>
+                      <option value="">Select City</option>
+                      <option value="Chennai">Chennai</option>
+                      <option value="Delhi">Delhi</option>
+                      <option value="Pune">Pune</option>
+                      <option value="Hyderabad">Hyderabad</option>
+                      <option value="Jaipur">Jaipur</option>
                     </select>
                     {form1.formState.errors.city && (
                       <p className="text-xs text-red-500">{form1.formState.errors.city.message}</p>
                     )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Sex</label>
+                    <select 
+                      {...form1.register("sex")}
+                      className="w-full p-3 rounded-lg border bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                    >
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">BMI</label>
+                    <input 
+                      type="number" 
+                      step="0.1"
+                      placeholder="e.g. 25.5"
+                      {...form1.register("bmi")}
+                      className="w-full p-3 rounded-lg border bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Children</label>
+                    <input 
+                      type="number" 
+                      placeholder="e.g. 2"
+                      {...form1.register("children")}
+                      className="w-full p-3 rounded-lg border bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Smoker</label>
+                    <select 
+                      {...form1.register("smoker")}
+                      className="w-full p-3 rounded-lg border bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                    >
+                      <option value="no">No</option>
+                      <option value="yes">Yes</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Region</label>
+                    <select 
+                      {...form1.register("region")}
+                      className="w-full p-3 rounded-lg border bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                    >
+                      <option value="southwest">Southwest</option>
+                      <option value="southeast">Southeast</option>
+                      <option value="northwest">Northwest</option>
+                      <option value="northeast">Northeast</option>
+                    </select>
                   </div>
 
                   <div className="space-y-2">
@@ -244,12 +302,12 @@ export default function Wizard() {
           {step === 2 && (
             <WizardStep key="step2" title="Insurance Coverage" description="Let's check how much your insurance might cover.">
               <div className="mb-6 p-4 bg-blue-50 rounded-lg text-blue-800 text-sm border border-blue-100">
-                <strong>Preliminary Estimate:</strong> Treatment for {formData.condition} in a {formData.hospital_type} hospital typically averages around <strong>${results.prediction?.avg_cost.toLocaleString()}</strong>.
+                <strong>Preliminary Estimate:</strong> Treatment for {formData.condition.replace("_", " ")} in {formData.city} typically averages around <strong>₹{results.prediction?.avg_cost.toLocaleString()}</strong>.
               </div>
               
               <form onSubmit={form2.handleSubmit(handleStep2)} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Total Coverage Amount ($)</label>
+                  <label className="text-sm font-medium text-slate-700">Total Coverage Amount (₹)</label>
                   <input 
                     type="number" 
                     placeholder="e.g. 500000"
@@ -293,10 +351,10 @@ export default function Wizard() {
             <WizardStep key="step3" title="Financial Health" description="Help us recommend the best payment strategy.">
               <form onSubmit={form3.handleSubmit(handleStep3)} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Monthly Household Income ($)</label>
+                  <label className="text-sm font-medium text-slate-700">Monthly Household Income (₹)</label>
                   <input 
                     type="number" 
-                    placeholder="e.g. 5000"
+                    placeholder="e.g. 50000"
                     {...form3.register("monthly_income")}
                     className="w-full p-3 rounded-lg border bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
                   />
