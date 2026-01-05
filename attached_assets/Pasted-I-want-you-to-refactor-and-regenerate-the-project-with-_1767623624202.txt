@@ -1,0 +1,70 @@
+I want you to refactor and regenerate the project with the following changes and constraints:
+
+=====================
+BACKEND REQUIREMENTS
+=====================
+
+1. Replace the entire backend with **FastAPI (Python)**.
+2. Follow clean architecture:
+   - routers/
+   - services/
+   - models/
+   - schemas/
+   - database/
+3. Use **Pydantic models** for request/response validation.
+4. Use **SQLAlchemy** (async preferred) for database interaction.
+5. Expose REST APIs compatible with the existing React frontend.
+6. Include automatic OpenAPI / Swagger documentation.
+
+### Machine Learning / Data Models
+* Import and integrate the following models and logic from the attached Jupyter notebooks:
+  - [INSERT NOTEBOOK NAME 1]
+  - [INSERT NOTEBOOK NAME 2]
+* Convert notebook code into reusable Python modules.
+* Ensure models load efficiently (lazy loading where applicable).
+* If inference is required, expose endpoints like:
+  - POST /predict
+  - POST /analyze
+  - POST /recommend
+
+THE CURRENCY SHOULD BE INDIAN RUPEES.
+
+=====================
+FRONTEND REQUIREMENTS (React)
+=====================
+
+1. Keep the frontend in **React**.
+2. Do NOT rewrite the app in another framework.
+3. Ensure compatibility with the new FastAPI backend.
+4. Update API service calls if endpoints change.
+
+### Dark Mode
+* Introduce **Dark Mode** with:
+  - Toggle switch
+  - System preference detection (prefers-color-scheme)
+  - Persistent setting using localStorage
+* Use a clean theme system (CSS variables, Tailwind, or styled-components).
+* Ensure accessibility contrast compliance.
+
+=====================
+GENERAL REQUIREMENTS
+=====================
+
+* Environment variables for secrets and configs
+* Proper error handling and validation
+* Clear README with:
+  - How to run backend
+  - How to run frontend
+  - API documentation
+* Use Python 3.10+ for backend
+* Keep code readable and well-commented
+
+=====================
+OUTPUT EXPECTATION
+=====================
+
+* Fully working FastAPI backend
+* React frontend with dark mode
+* India-specific medication pricing logic
+* ML/data models correctly integrated from notebooks
+* Clean, production-ready project structure
