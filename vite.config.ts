@@ -30,18 +30,7 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-    chunkSizeWarningLimit: 1000, // Increase warning threshold
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          // Split vendor code
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          // Add other large libraries you're using
-          // 'chart-vendor': ['recharts', 'chart.js'], // example
-          // 'ui-vendor': ['@radix-ui/react-*'], // example
-        }
-      }
-    }
+    chunkSizeWarningLimit: 1000, // Just increase the warning limit
   },
   server: {
     fs: {
